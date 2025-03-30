@@ -60,10 +60,8 @@ final class ItemFactory
 		GlobalItemDataHandlers::getSerializer()->map($item, fn(): SavedItemData => new SavedItemData($identifier));
 		if ($override) {
 			StringToItemParser::getInstance()->override($identifier, fn(): Item => clone $item);
-			StringToItemParser::getInstance()->override(str_replace(['nightfall:', 'delight:', 'itz:'], ['', '', ''], $identifier), fn(): Item => clone $item);
 		} else {
 			StringToItemParser::getInstance()->register($identifier, fn(): Item => clone $item);
-			StringToItemParser::getInstance()->register(str_replace(['nightfall:', 'delight:', 'itz:'], ['', '', ''], $identifier), fn(): Item => clone $item);
 		}
 		$componentBased = false;
 		if ($item instanceof ItemComponents) $componentBased = true;
@@ -90,7 +88,6 @@ final class ItemFactory
 		$itemId = $block->getIdInfo()->getBlockTypeId();
 		$this->registerCustomItemMapping($identifier, $itemId);
 		StringToItemParser::getInstance()->registerBlock($identifier, fn(): Block => clone $block);
-		StringToItemParser::getInstance()->registerBlock(str_replace(['nightfall:', 'delight:'], ['', ''], $identifier), fn(): Block => clone $block);
 		$this->itemTableEntries[] = new ItemTypeEntry($identifier, $itemId, false, $version, new CacheableNbt(CompoundTag::create()));
 		$blockItemIdMap = BlockItemIdMap::getInstance();
 		$reflection = new ReflectionClass($blockItemIdMap);

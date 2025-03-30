@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace astreal;
 
+use astreal\libraries\inventory\InventoryManager;
 use astreal\libraries\LootTableManager;
 use astreal\libraries\StructureBlockManager;
+use astreal\libraries\vanilla\VanillaManager;
 use astreal\system\CommandManager;
+use astreal\system\RegisterManager;
 use muqsit\invmenu\InvMenuHandler;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\SingletonTrait;
@@ -36,6 +39,9 @@ class Loader extends PluginBase
     public function onEnable(): void
     {
         if (!InvMenuHandler::isRegistered()) InvMenuHandler::register($this);
+        VanillaManager::getInstance();
+        RegisterManager::make();
+        new InventoryManager();
         $this->command_manager = new CommandManager();
         $this->loot_table_manager = new LootTableManager($this->getDataFolder() . 'loot_tables');
     }

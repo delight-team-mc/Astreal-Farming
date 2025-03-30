@@ -1,34 +1,41 @@
 <?php
-/*
- * 
- * ██████╗ ███████╗██╗     ██╗ ██████╗ ██╗  ██╗████████╗
- * ██╔══██╗██╔════╝██║     ██║██╔════╝ ██║  ██║╚══██╔══╝
- * ██║  ██║█████╗  ██║     ██║██║  ██╗ ███████║   ██║   
- * ██║  ██║██╔══╝  ██║     ██║██║  ╚██╗██╔══██║   ██║   
- * ██████╔╝███████╗███████╗██║╚██████╔╝██║  ██║   ██║   
- * ╚═════╝ ╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   
- * 
- * @Author: Joshet18
- * @Discord: https://discord.gg/aqbWcsyTZv
- */
 
 declare(strict_types=1);
 
 namespace astreal\libraries\vanilla;
 
+use astreal\block\BackPack;
+use astreal\block\DyedBackpack;
+use astreal\block\tile\BackPack as TitleBackPack;
 use pocketmine\block\Block;
 use pocketmine\block\BlockBreakInfo;
 use pocketmine\block\BlockIdentifier;
 use pocketmine\block\BlockTypeIds;
 use pocketmine\block\BlockTypeInfo;
-use pocketmine\block\{
-	BlockToolType,
-	Opaque
-};
+use pocketmine\block\BlockToolType;
+use pocketmine\block\utils\DyeColor;
+use pocketmine\item\Item;
 use pocketmine\utils\CloningRegistryTrait;
-use pocketmine\item\ToolTier;
 
 /**
+ * @method static BackPack BACKPACK()
+ * @method static DyedBackPack BLACK_BACKPACK()
+ * @method static DyedBackPack BLUE_BACKPACK()
+ * @method static DyedBackPack BROWN_BACKPACK()
+ * @method static DyedBackPack CYAN_BACKPACK()
+ * @method static DyedBackPack GRAY_BACKPACK()
+ * @method static DyedBackPack GREEN_BACKPACK()
+ * @method static DyedBackPack LIGHT_BLUE_BACKPACK()
+ * @method static DyedBackPack LIGHT_GRAY_BACKPACK()
+ * @method static DyedBackPack LIME_BACKPACK()
+ * @method static DyedBackPack MAGENTA_BACKPACK()
+ * @method static DyedBackPack ORANGE_BACKPACK()
+ * @method static DyedBackPack PINK_BACKPACK()
+ * @method static DyedBackPack PURPLE_BACKPACK()
+ * @method static DyedBackPack RED_BACKPACK()
+ * @method static DyedBackPack WHITE_BACKPACK()
+ * @method static DyedBackPack YELLOW_BACKPACK()
+ * 
  * This doc-block is generated automatically, do not modify it manually.
  * This must be regenerated whenever registry members are added, removed or changed.
  * @see build/generate-registry-annotations.php
@@ -56,5 +63,29 @@ final class ExtraVanillaBlocks
 		return $result;
 	}
 
-	protected static function setup(): void {}
+	protected static function setup(): void
+	{
+		self::register('backpack', new BackPack(new BlockIdentifier(BlockTypeIds::newId(), TitleBackPack::class), 'BackPack', new BlockTypeInfo(new BlockBreakInfo(0.8, BlockToolType::SHEARS))));
+		foreach (DyeColor::getAll() as $color) {
+			$id = match ($color) {
+				DyeColor::BLACK() => CustomBlockTypeNames::BLACK_BACKPACK,
+				DyeColor::BLUE() => CustomBlockTypeNames::BLUE_BACKPACK,
+				DyeColor::BROWN() => CustomBlockTypeNames::BROWN_BACKPACK,
+				DyeColor::CYAN() => CustomBlockTypeNames::CYAN_BACKPACK,
+				DyeColor::GRAY() => CustomBlockTypeNames::GRAY_BACKPACK,
+				DyeColor::GREEN() => CustomBlockTypeNames::GREEN_BACKPACK,
+				DyeColor::LIGHT_BLUE() => CustomBlockTypeNames::LIGHT_BLUE_BACKPACK,
+				DyeColor::LIGHT_GRAY() => CustomBlockTypeNames::LIGHT_GRAY_BACKPACK,
+				DyeColor::LIME() => CustomBlockTypeNames::LIME_BACKPACK,
+				DyeColor::MAGENTA() => CustomBlockTypeNames::MAGENTA_BACKPACK,
+				DyeColor::ORANGE() => CustomBlockTypeNames::ORANGE_BACKPACK,
+				DyeColor::PINK() => CustomBlockTypeNames::PINK_BACKPACK,
+				DyeColor::PURPLE() => CustomBlockTypeNames::PURPLE_BACKPACK,
+				DyeColor::RED() => CustomBlockTypeNames::RED_BACKPACK,
+				DyeColor::WHITE() => CustomBlockTypeNames::WHITE_BACKPACK,
+				DyeColor::YELLOW() => CustomBlockTypeNames::YELLOW_BACKPACK,
+			};
+			self::register(str_replace('astreal:', '', $id), (new DyedBackpack(new BlockIdentifier(BlockTypeIds::newId(), TitleBackPack::class), $color->getDisplayName() . ' BackPack', new BlockTypeInfo(new BlockBreakInfo(0.8, BlockToolType::SHEARS))))->setColor($color)->setColorTexture($id));
+		}
+	}
 }

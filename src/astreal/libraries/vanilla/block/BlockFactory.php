@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace astreal\libraries\vanilla\block;
@@ -19,12 +20,14 @@ use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\convert\BlockStateReader;
 use pocketmine\data\bedrock\block\convert\BlockStateWriter;
+use pocketmine\inventory\CreativeCategory;
 use pocketmine\inventory\CreativeInventory;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\protocol\types\BlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use pocketmine\Server;
+use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use function array_map;
@@ -33,8 +36,9 @@ use function hash;
 use function strcmp;
 use function usort;
 
-final class BlockFactory{
-	use SingletonTrait{
+final class BlockFactory
+{
+	use SingletonTrait {
 		getInstance as SgetInstance;
 	}
 
@@ -48,11 +52,13 @@ final class BlockFactory{
 	/** @var array<string, Block> */
 	private array $customBlocks = [];
 
-	public static function getInstance(): BlockFactory{
+	public static function getInstance(): BlockFactory
+	{
 		return self::SgetInstance();
 	}
 
-	public function addWorkerInitHook(string $cachePath): void {
+	public function addWorkerInitHook(string $cachePath): void
+	{
 		$server = Server::getInstance();
 		$blocks = $this->blockFuncs;
 		$server->getAsyncPool()->addWorkerStartHook(static function (int $worker) use ($cachePath, $server, $blocks): void {
@@ -60,7 +66,8 @@ final class BlockFactory{
 		});
 	}
 
-	public function get(string $identifier): ?Block {
+	public function get(string $identifier): ?Block
+	{
 		return clone (
 			$this->customBlocks[$identifier] ??
 			null
@@ -70,73 +77,125 @@ final class BlockFactory{
 	/**
 	 * @return BlockPaletteEntry[]
 	 */
-	public function getBlockPaletteEntries(): array {
+	public function getBlockPaletteEntries(): array
+	{
 		return $this->blockPaletteEntries;
 	}
 
-	public function registerBlock(Closure $blockFunc, string $identifier, ?Model $model = null, ?CreativeInventoryInfo $creativeInfo = null, ?Closure $serializer = null, ?Closure $deserializer = null): void {
+	/**
+	 * Register a block to the BlockFactory and all the required mappings. A custom stateReader and stateWriter can be
+	 * provided to allow for custom block state serialization.
+	 * @phpstan-param (Closure(): Block) $blockFunc
+	 * @phpstan-param null|(Closure(BlockStateWriter): Block) $serializer
+	 * @phpstan-param null|(Closure(Block): BlockStateReader) $deserializer
+	 */
+	public function registerBlock(Closure $blockFunc, string $identifier, ?CreativeInventoryInfo $creativeInfo = null, ?Closure $serializer = null, ?Closure $deserializer = null): void
+	{
 		$block = $blockFunc();
-		if(!$block instanceof Block) {
+		if (!$block instanceof Block) {
 			throw new InvalidArgumentException("Class returned from closure is not a Block");
 		}
 		RuntimeBlockStateRegistry::getInstance()->register($block);
 		ItemFactory::getInstance()->registerBlockItem($identifier, $block);
 		$this->customBlocks[$identifier] = $block;
 		$propertiesTag = CompoundTag::create();
-		$components = CompoundTag::create()->setTag("minecraft:light_emission", CompoundTag::create()->setByte("emission", $block->getLightLevel()))->setTag("minecraft:light_dampening", CompoundTag::create()->setByte("lightLevel", $block->getLightFilter()))->setTag("minecraft:destructible_by_mining", CompoundTag::create()->setFloat("value", $block->getBreakInfo()->getHardness()))->setTag("minecraft:friction", CompoundTag::create()->setFloat("value", 1 - $block->getFrictionFactor()));
-		if($model !== null){
-			/** @var string $tagName */
-			foreach($model->toNBT() as $tagName => $tag){
-				$components->setTag($tagName, $tag);
+		$components = CompoundTag::create();
+		if ($block instanceof BlockComponents) {
+			foreach ($block->getComponents() as $component) {
+				$components->setTag($component->getName(), $component->getValue());
 			}
 		}
-		if($block instanceof Permutable){
+		if ($block instanceof Permutable) {
 			$blockPropertyNames = $blockPropertyValues = $blockProperties = [];
-			foreach($block->getBlockProperties() as $blockProperty){
+			foreach ($block->getBlockProperties() as $blockProperty) {
 				$blockPropertyNames[] = $blockProperty->getName();
 				$blockPropertyValues[] = $blockProperty->getValues();
 				$blockProperties[] = $blockProperty->toNBT();
 			}
 			$permutations = array_map(static fn(Permutation $permutation) => $permutation->toNBT(), $block->getPermutations());
+			// The 'minecraft:on_player_placing' component is required for the client to predict block placement, making
+			// it a smoother experience for the end-user.
 			$components->setTag("minecraft:on_player_placing", CompoundTag::create());
-			$propertiesTag->setTag("permutations", new ListTag($permutations))->setTag("properties", new ListTag(array_reverse($blockProperties)));
-			foreach(Permutations::getCartesianProduct($blockPropertyValues) as $meta => $permutations){
+			$propertiesTag
+				->setTag("permutations", new ListTag($permutations))
+				->setTag("properties", new ListTag(array_reverse($blockProperties))); // fix client-side order
+			foreach (Permutations::getCartesianProduct($blockPropertyValues) as $meta => $permutations) {
+				// We need to insert states for every possible permutation to allow for all blocks to be used and to
+				// keep in sync with the client's block palette.
 				$states = CompoundTag::create();
-				foreach($permutations as $i => $value)$states->setTag($blockPropertyNames[$i], NBT::getTagType($value));
-				$blockState = CompoundTag::create()->setString(BlockStateData::TAG_NAME, $identifier)->setTag(BlockStateData::TAG_STATES, $states);
+				foreach ($permutations as $i => $value) {
+					$states->setTag($blockPropertyNames[$i], NBT::getTagType($value));
+				}
+				$blockState = CompoundTag::create()
+					->setString(BlockStateData::TAG_NAME, $identifier)
+					->setTag(BlockStateData::TAG_STATES, $states);
 				BlockPalette::getInstance()->insertState($blockState, $meta);
 			}
-			$serializer ??= static function (Permutable $block) use ($identifier, $blockPropertyNames) : BlockStateWriter {
+
+			$serializer ??= static function (Permutable $block) use ($identifier, $blockPropertyNames): BlockStateWriter {
 				$b = BlockStateWriter::create($identifier);
 				$block->serializeState($b);
 				return $b;
 			};
-			$deserializer ??= static function (BlockStateReader $in) use ($block, $identifier, $blockPropertyNames) : Permutable {
+			$deserializer ??= static function (BlockStateReader $in) use ($block, $identifier, $blockPropertyNames): Permutable {
 				$b = BlockFactory::getInstance()->get($identifier);
 				assert($b instanceof Permutable);
 				$b->deserializeState($in);
 				return $b;
 			};
 		} else {
-			$blockState = CompoundTag::create()->setString(BlockStateData::TAG_NAME, $identifier)->setTag(BlockStateData::TAG_STATES, CompoundTag::create());
+			// If a block does not contain any permutations we can just insert the one state.
+			$blockState = CompoundTag::create()
+				->setString(BlockStateData::TAG_NAME, $identifier)
+				->setTag(BlockStateData::TAG_STATES, CompoundTag::create());
 			BlockPalette::getInstance()->insertState($blockState);
 			$serializer ??= static fn() => new BlockStateWriter($identifier);
 			$deserializer ??= static fn(BlockStateReader $in) => $block;
 		}
 		GlobalBlockStateHandlers::getSerializer()->map($block, $serializer);
 		GlobalBlockStateHandlers::getDeserializer()->map($identifier, $deserializer);
+		$addToCreative = $creativeInfo !== null;
 		$creativeInfo ??= CreativeInventoryInfo::DEFAULT();
-		$components->setTag("minecraft:creative_category", CompoundTag::create()->setString("category", $creativeInfo->getCategory())->setString("group", $creativeInfo->getGroup()));
-		$propertiesTag->setTag("components", $components->setTag("minecraft:creative_category", CompoundTag::create()->setString("category", $creativeInfo->getCategory())->setString("group", $creativeInfo->getGroup())))->setTag("menu_category", CompoundTag::create()->setString("category", $creativeInfo->getCategory() ?? "")->setString("group", $creativeInfo->getGroup() ?? ""))->setInt("molangVersion", 1);
-		CreativeInventory::getInstance()->add($block->asItem());
+		$components->setTag("minecraft:creative_category", CompoundTag::create()
+			->setString("category", $creativeInfo->getCategory())
+			->setString("group", $creativeInfo->getGroup()));
+		$propertiesTag
+			->setTag(
+				"components",
+				$components->setTag("minecraft:creative_category", CompoundTag::create()
+					->setString("category", $creativeInfo->getCategory())
+					->setString("group", $creativeInfo->getGroup()))
+			)
+			->setTag("menu_category", CompoundTag::create()
+				->setString("category", $creativeInfo->getCategory() ?? "")
+				->setString("group", $creativeInfo->getGroup() ?? ""))
+			->setInt("molangVersion", 1);
+		if ($addToCreative) {
+			CreativeInventory::getInstance()->add($block->asItem(), match ($creativeInfo->getCategory()) {
+				CreativeInventoryInfo::CATEGORY_CONSTRUCTION => CreativeCategory::CONSTRUCTION,
+				CreativeInventoryInfo::CATEGORY_ITEMS => CreativeCategory::ITEMS,
+				CreativeInventoryInfo::CATEGORY_NATURE => CreativeCategory::NATURE,
+				CreativeInventoryInfo::CATEGORY_EQUIPMENT => CreativeCategory::EQUIPMENT,
+				default => throw new AssumptionFailedError("Unknown category")
+			});
+		}
 		$this->blockPaletteEntries[] = new BlockPaletteEntry($identifier, new CacheableNbt($propertiesTag));
 		$this->blockFuncs[$identifier] = [$blockFunc, $serializer, $deserializer];
-		usort($this->blockPaletteEntries, static function(BlockPaletteEntry $a, BlockPaletteEntry $b): int {
+		// 1.20.60 added a new "block_id" field which depends on the order of the block palette entries. Every time we
+		// insert a new block, we need to re-sort the block palette entries to keep in sync with the client.
+		usort($this->blockPaletteEntries, static function (BlockPaletteEntry $a, BlockPaletteEntry $b): int {
 			return strcmp(hash("fnv164", $a->getName()), hash("fnv164", $b->getName()));
 		});
-		foreach($this->blockPaletteEntries as $i => $entry){
-			$root = $entry->getStates()->getRoot()->setTag("vanilla_block_data", CompoundTag::create()->setInt("block_id", 10000 + $i));
+		foreach ($this->blockPaletteEntries as $i => $entry) {
+			$root = $entry->getStates()->getRoot()
+				->setTag("vanilla_block_data", CompoundTag::create()
+					->setInt("block_id", 10000 + $i));
 			$this->blockPaletteEntries[$i] = new BlockPaletteEntry($entry->getName(), new CacheableNbt($root));
 		}
+	}
+
+	public function mapBlockStatesDeserializer(Block $block, Closure $deserializer, array $ids): void
+	{
+		foreach ($ids as $id) GlobalBlockStateHandlers::getDeserializer()->map($id, $deserializer);
 	}
 }
