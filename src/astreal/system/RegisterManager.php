@@ -2,6 +2,7 @@
 
 namespace astreal\system;
 
+use astreal\AstrealListener;
 use astreal\block\DyedBackpack;
 use astreal\block\tile\BackPack;
 use astreal\libraries\managers\BaseManager;
@@ -9,9 +10,12 @@ use astreal\libraries\vanilla\block\BlockFactory;
 use astreal\libraries\vanilla\block\Material;
 use astreal\libraries\vanilla\block\Model;
 use astreal\libraries\vanilla\block\permutations\Permutable;
+use astreal\libraries\vanilla\CraftingRegister;
 use astreal\libraries\vanilla\CustomBlockTypeNames;
 use astreal\libraries\vanilla\ExtraVanillaBlocks;
 use astreal\libraries\vanilla\item\CreativeInventoryInfo;
+use muqsit\vanillagenerator\generator\nether\NetherGenerator;
+use muqsit\vanillagenerator\generator\overworld\OverworldGenerator;
 use pocketmine\block\tile\TileFactory;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\data\bedrock\block\convert\BlockStateReader;
@@ -20,6 +24,7 @@ use pocketmine\item\StringToItemParser;
 use pocketmine\math\Vector3;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
+use pocketmine\world\generator\GeneratorManager;
 
 class RegisterManager extends BaseManager
 {
@@ -40,10 +45,13 @@ class RegisterManager extends BaseManager
         parent::__construct('RegisterManager');
         self::setInstance($this);
         $this->setup_items();
+        //CraftingRegister::load();
         $this->setup_recipes();
         $this->setup_entitys();
         $this->setup_blocks();
         $this->setup_tiles();
+        $this->setup_listeners();
+        $this->setup_generators();
     }
 
     public function setup_tiles(): void
@@ -84,5 +92,17 @@ class RegisterManager extends BaseManager
                 new ShapedRecipe(["AAA", "ABA", "AAA"], ["A" => new ExactRecipeIngredient(VanillaItems::GOLD_INGOT()), "B" => new ExactRecipeIngredient(VanillaBlocks::MOB_HEAD()->setMobHeadType(MobHeadType::SKELETON())->asItem())], [CustomItems::GOLDEN_HEAD()])
             ] as $recipe
         ) $this->getServer()->getCraftingManager()->registerShapedRecipe($recipe);*/
+    }
+
+    public function setup_listeners(): void
+    {
+        $register = $this->getServer()->getPluginManager()->registerEvents(...);
+        $register(new AstrealListener(), $this);
+    }
+
+    public function setup_generators():void{
+        $generator_manager = GeneratorManager::getInstance();
+		$generator_manager->addGenerator(NetherGenerator::class, "vanilla_nether", fn() => null);
+		$generator_manager->addGenerator(OverworldGenerator::class, "vanilla_overworld", fn() => null);
     }
 }

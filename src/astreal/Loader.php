@@ -47,10 +47,4 @@ class Loader extends PluginBase
     }
 
     public function onDisable(): void {}
-
-    private function listeners(): void
-    {
-        $register = $this->getServer()->getPluginManager()->registerEvents(...);
-        $register(new AstrealListener(), $this);
-    }
 }

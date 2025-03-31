@@ -6,12 +6,15 @@ use astreal\block\tile\BackPack as TitleBackPack;
 use astreal\libraries\inventory\InventoryManager;
 use astreal\libraries\vanilla\block\BlockComponents;
 use astreal\libraries\vanilla\block\BlockComponentsTrait;
+use astreal\libraries\vanilla\block\component\CollisionBoxComponent;
 use astreal\libraries\vanilla\block\component\GeometryComponent;
 use astreal\libraries\vanilla\block\component\MaterialInstancesComponent;
+use astreal\libraries\vanilla\block\component\SelectionBoxComponent;
 use astreal\libraries\vanilla\block\Material;
 use astreal\libraries\vanilla\block\permutations\Permutable;
 use astreal\libraries\vanilla\block\permutations\RotatableTrait;
 use astreal\libraries\vanilla\CustomBlockTypeNames;
+use astreal\Loader;
 use pocketmine\block\BlockIdentifier;
 use pocketmine\block\BlockTypeInfo;
 use pocketmine\block\Transparent;
@@ -32,6 +35,13 @@ class BackPack extends Transparent implements Permutable, BlockComponents
         $this->initComponent(CustomBlockTypeNames::BACKPACK);
         $this->addComponent(new MaterialInstancesComponent([Material::create(Material::TARGET_ALL, CustomBlockTypeNames::BACKPACK, Material::RENDER_METHOD_ALPHA_TEST)]));
         $this->addComponent(new GeometryComponent('geometry.backpack'));
+        $this->addComponent(new SelectionBoxComponent(true, new Vector3(-7.0, 0.0, -5.0), new Vector3(14.0, 15.0, 8.0)));
+        $this->addComponent(new CollisionBoxComponent(true, new Vector3(-7.0, 0.0, -5.0), new Vector3(14.0, 15.0, 8.0)));
+    }
+
+    public function getMaxStackSize(): int
+    {
+        return 1;
     }
 
     public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []): bool
@@ -43,6 +53,16 @@ class BackPack extends Transparent implements Permutable, BlockComponents
             }
         }
         return false;
+    }
+
+    public function getFrictionFactor(): float
+    {
+        return 0.4;
+    }
+
+    public function hasEntityCollision(): bool
+    {
+        return true;
     }
 
     private function addDataFromTile(TitleBackPack $tile, Item $item): void

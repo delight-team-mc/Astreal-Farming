@@ -28,6 +28,7 @@ class InventoryManager extends BaseManager
     use SingletonTrait;
 
     private Closure $open_callback;
+    private array $wait = [];
 
     public static function getInstance(): InventoryManager
     {
@@ -53,8 +54,10 @@ class InventoryManager extends BaseManager
 
     public function sendInventory(Player $player, Inventory $inventory): bool
     {
+        if (isset($this->wait[$player->getName()])) return false;
         $callbacks = $player->getNetworkSession()->getInvManager()?->getContainerOpenCallbacks();
         if ($callbacks === null) return false;
+        $this->wait[$player->getName()] = time();
         $callbacks->remove($this->open_callback);
         $previous = $callbacks->toArray();
         $callbacks->clear();
@@ -73,9 +76,9 @@ class InventoryManager extends BaseManager
             }
             return null;
         }, ...$previous);
-        $time = 1;
+        $time = 10;
         if ($inventory instanceof MenuInventory) {
-            $time = 2;
+            if ($inventory->isDouble()) $time = 10;
             $inventory->show_menu($player);
         }
         if ($inventory instanceof FakeBlockInventory) $inventory->beforeOpeningInventory($player);
@@ -95,6 +98,7 @@ class InventoryManager extends BaseManager
     {
         $player = $ev->getPlayer();
         $inventory = $ev->getInventory();
+        if (isset($this->wait[$player->getName()])) unset($this->wait[$player->getName()]);
         if ($inventory instanceof ListenerInventory) $inventory->close($player);
     }
 
