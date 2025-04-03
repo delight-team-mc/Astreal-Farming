@@ -34,4 +34,6 @@ final class CustomBlockTypeNames
     const RED_BACKPACK = 'astreal:red_backpack';
     const WHITE_BACKPACK = 'astreal:white_backpack';
     const YELLOW_BACKPACK = 'astreal:yellow_backpack';
+    const STONE_GRAVE = 'astreal:stone_grave';
+    const GRAVEL_GRAVE = 'astreal:gravel_grave';
 }

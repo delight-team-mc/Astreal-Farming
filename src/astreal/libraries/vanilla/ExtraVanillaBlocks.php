@@ -6,7 +6,10 @@ namespace astreal\libraries\vanilla;
 
 use astreal\block\BackPack;
 use astreal\block\DyedBackpack;
+use astreal\block\Grave;
 use astreal\block\tile\BackPack as TitleBackPack;
+use astreal\block\tile\Grave as TileGrave;
+use astreal\block\utils\GraveType;
 use pocketmine\block\Block;
 use pocketmine\block\BlockBreakInfo;
 use pocketmine\block\BlockIdentifier;
@@ -15,6 +18,7 @@ use pocketmine\block\BlockTypeInfo;
 use pocketmine\block\BlockToolType;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\item\Item;
+use pocketmine\item\ToolTier;
 use pocketmine\utils\CloningRegistryTrait;
 
 /**
@@ -35,6 +39,8 @@ use pocketmine\utils\CloningRegistryTrait;
  * @method static DyedBackPack RED_BACKPACK()
  * @method static DyedBackPack WHITE_BACKPACK()
  * @method static DyedBackPack YELLOW_BACKPACK()
+ * @method static Grave STONE_GRAVE()
+ * @method static Grave GRAVEL_GRAVE()
  * 
  * This doc-block is generated automatically, do not modify it manually.
  * This must be regenerated whenever registry members are added, removed or changed.
@@ -65,6 +71,8 @@ final class ExtraVanillaBlocks
 
 	protected static function setup(): void
 	{
+		self::register('stone_grave', (new Grave(new BlockIdentifier(BlockTypeIds::newId(), TileGrave::class), 'Stone Grave', new BlockTypeInfo(BlockBreakInfo::pickaxe(2.0, ToolTier::WOOD, 30.0))))->setType(GraveType::STONE())->setTexture('astreal:stone_grave', 'geometry.grave.var.1'));
+		self::register('gravel_grave', (new Grave(new BlockIdentifier(BlockTypeIds::newId(), TileGrave::class), 'Gravel Grave', new BlockTypeInfo(BlockBreakInfo::pickaxe(2.0, ToolTier::WOOD, 30.0))))->setType(GraveType::GRAVEL())->setTexture('astreal:gravel_grave', 'geometry.grave.var.2'));
 		self::register('backpack', new BackPack(new BlockIdentifier(BlockTypeIds::newId(), TitleBackPack::class), 'BackPack', new BlockTypeInfo(new BlockBreakInfo(0.8, BlockToolType::SHEARS))));
 		foreach (DyeColor::getAll() as $color) {
 			$id = match ($color) {
