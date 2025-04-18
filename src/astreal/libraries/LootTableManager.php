@@ -3,8 +3,8 @@
 namespace astreal\libraries;
 
 use astreal\libraries\managers\BaseManager;
+use Closure;
 use JsonSerializable;
-use pocketmine\block\DyedShulkerBox;
 use pocketmine\block\tile\Container;
 use pocketmine\color\Color;
 use pocketmine\data\bedrock\EnchantmentIdMap;
@@ -98,14 +98,21 @@ class LootTable implements JsonSerializable
 
     public function __construct(private array $data) {}
 
-    /** @return Item[] */
-    public function get(): array
+    /**
+     * @param array $entries
+     * @param (Closure(array $entry):int)|null $quality
+     * $quality = function (array $entry) {
+     *    return $entry['weight'] + ($entry['quality'] * 5);
+     *};
+     * @return Item[]
+     */
+    public function get(?Closure $quality = null): array
     {
         $result = [];
         foreach ($this->data['pools'] as $pool) {
             $rolls = (int)((is_array($pool['rolls']) && isset($pool['rolls']['min']) && isset($pool['rolls']['max'])) ? mt_rand($pool['rolls']['min'], $pool['rolls']['max']) : (is_int($pool['rolls']) ? $pool['rolls'] : 1));
             for ($i = 0; $i < $rolls; $i++) {
-                $entry = $this->getEntry($pool['entries']);
+                $entry = $this->getEntry($pool['entries'], $quality);
                 if ($entry !== null) {
                     switch ($entry['type']) {
                         case 'item':
@@ -119,7 +126,7 @@ class LootTable implements JsonSerializable
                             break;
                         case 'loot_table':
                             $loot_table = LootTableManager::getInstance()->load($entry['name']);
-                            if ($loot_table !== null) array_merge($result, $loot_table->get());
+                            if ($loot_table !== null) $result = array_merge($result, $loot_table->get());
                         case 'empty':
                             break;
                     }
@@ -129,16 +136,26 @@ class LootTable implements JsonSerializable
         return $result;
     }
 
-    private function getEntry(array $entries): ?array
+    /**
+     * @param array $entries
+     * @param (Closure(array $entry):int)|null $quality
+     * $quality = function (array $entry) {
+     *    return $entry['weight'] + ($entry['quality'] * 5);
+     *};
+     */
+    private function getEntry(array $entries, ?Closure $quality = null): ?array
     {
+        foreach ($entries as $entry) {
+            $weight = $entry["weight"];
+            if (isset($entry["quality"]) && $quality !== null) $weight = $quality($entry);
+            $entry["weight"] = max(1, $weight);
+        }
         $totalWeight = array_sum(array_column($entries, "weight"));
         $rand = mt_rand(1, $totalWeight);
         $currentWeight = 0;
         foreach ($entries as $entry) {
             $currentWeight += $entry["weight"];
-            if ($rand <= $currentWeight) {
-                return $entry;
-            }
+            if ($rand <= $currentWeight) return $entry;
         }
         return null;
     }

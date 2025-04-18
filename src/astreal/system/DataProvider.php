@@ -56,7 +56,10 @@ class DataProvider extends BaseManager
     {
         $this->behavior_folder = $this->getServer()->getDataPath() . 'Behavior' . DIRECTORY_SEPARATOR;
         $this->resources_folder = $this->getServer()->getDataPath() . 'Resources' . DIRECTORY_SEPARATOR;
-        foreach ([$this->behavior_folder, $this->resources_folder] as $path) @mkdir($path);
+        foreach ([$this->behavior_folder, $this->resources_folder, Path::join($this->getLoader()->getDataFolder(), 'lang')] as $path) @mkdir($path);
+        $this->getLoader()->saveResource("Scoreboard.json");
+        $this->getLoader()->saveResource("CraftingRecipes.json");
+        $this->getLoader()->saveResource("CraftingTags.json");
         $this->setting = new Config($this->getLoader()->getDataFolder() . "setting.json", Config::JSON);
         $this->getLogger()->info('DataProvider enable!');
         $this->loadResourcePacks();
@@ -65,18 +68,17 @@ class DataProvider extends BaseManager
     public function createDir(string $path): void
     {
         $fullPath = $this->getLoader()->getDataFolder() . $path;
-
-        if (!is_dir($fullPath) && !mkdir($fullPath, 0777, true) && !is_dir($fullPath)) {
-            throw new RuntimeException("No se pudo crear el directorio: $fullPath");
-        }
+        if (!is_dir($fullPath) && !mkdir($fullPath, 0777, true) && !is_dir($fullPath)) throw new RuntimeException("No se pudo crear el directorio: $fullPath");
     }
 
-
+    /**
+     * @return SplFileInfo[]
+     */
     public function getFilesByPath(string $path, ?Closure $process = null): array
     {
         $files = [];
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-        foreach ($iterator as $file) if ($file->isFile()) $files[] = $process ? $process($file->getPathname()) : $file->getPathname();
+        foreach ($iterator as $file) if ($file->isFile()) $files[] = $process ? $process($file) : $file;
         return $files;
     }
 
@@ -145,7 +147,7 @@ class DataProvider extends BaseManager
         /** @var ResourcePack[] */
         $packs = [];
         try {
-            foreach ($this->getFilesByPath($this->resources_folder) as $file) if (file_exists($this->resources_folder . $file) && !is_dir($this->resources_folder . $file) && in_array((new SplFileInfo($this->resources_folder . $file))->getExtension(), [self::EXTENSION_ZIP, "mcpack"])) $packs[] = new ZippedResourcePack($this->resources_folder . $file);
+            foreach ($this->getFilesByPath($this->resources_folder) as $file) if (file_exists($file->getPathname()) && !is_dir($file->getPathname()) && in_array($file->getExtension(), [self::EXTENSION_ZIP, "mcpack"])) $packs[] = new ZippedResourcePack($file->getPathname());
             ($resource_manager = $this->getServer()->getResourcePackManager())->setResourceStack(array_merge($packs, $resource_manager->getResourceStack()));
         } catch (ResourcePackException | InvalidArgumentException $th) {
             $this->getLogger()->error($th->getMessage());

@@ -2,6 +2,9 @@
 
 namespace astreal\system;
 
+use astreal\command\EffectCommand;
+use astreal\command\GiveCommand;
+use astreal\command\WorldProtectCmd;
 use pocketmine\command\Command;
 use pocketmine\event\server\DataPacketSendEvent;
 use pocketmine\item\enchantment\StringToEnchantmentParser;
@@ -38,7 +41,7 @@ class CommandManager extends BaseManager
         self::setInstance($this);
         $this->registerEvent(DataPacketSendEvent::class, $this->AvailableCommandsHandler(...));
         $map = $this->getServer()->getCommandMap();
-        foreach (array_filter(array_map(fn(string $command) => $map->getCommand($command), []), fn(?Command $command): bool => !is_null($command)) as $command) $map->unregister($command);
+        foreach (array_filter(array_map(fn(string $command) => $map->getCommand($command), ['give', 'effect']), fn(?Command $command): bool => !is_null($command)) as $command) $map->unregister($command);
         $this->register_permissions();
         $this->register_commands();
     }
@@ -48,6 +51,7 @@ class CommandManager extends BaseManager
         foreach (
             [
                 'globar.command' => Permission::DEFAULT_NOT_OP,
+                'world.protect.command' => Permission::DEFAULT_OP
             ] as $permission => $default
         ) (new Permission($permission, $default))->build();
     }
@@ -55,7 +59,10 @@ class CommandManager extends BaseManager
     private function register_commands(): void
     {
         $this->registerCommand(...[
-            new \astreal\command\TestCmd()
+            new \astreal\command\TestCmd(),
+            new GiveCommand(),
+            new EffectCommand(),
+            new WorldProtectCmd(),
         ]);
     }
 

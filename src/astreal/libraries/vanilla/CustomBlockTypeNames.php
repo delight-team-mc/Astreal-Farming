@@ -36,4 +36,7 @@ final class CustomBlockTypeNames
     const YELLOW_BACKPACK = 'astreal:yellow_backpack';
     const STONE_GRAVE = 'astreal:stone_grave';
     const GRAVEL_GRAVE = 'astreal:gravel_grave';
+    const FISHING_FRAME = 'astreal:fishing_frame';
+    const BASIC_FISHING_NET = 'astreal:basic_fishing_net';
+    const IRON_FISHING_NET = 'astreal:iron_fishing_net';
 }

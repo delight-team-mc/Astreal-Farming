@@ -1,0 +1,15 @@
+[
+    {
+        "type": "shaped_not_valid",
+        "block": "",
+        "shape": [],
+        "input": {},
+        "output": []
+    },
+    {
+        "type": "shapeless_not_valid",
+        "block": "",
+        "input": [],
+        "output": []
+    }
+]

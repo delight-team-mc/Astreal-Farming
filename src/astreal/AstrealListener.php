@@ -9,6 +9,8 @@ use astreal\libraries\vanilla\ExtraVanillaBlocks;
 use pocketmine\block\tile\Container;
 use pocketmine\data\bedrock\item\SavedItemStackData;
 use pocketmine\data\SavedDataLoadingException;
+use pocketmine\entity\Entity;
+use pocketmine\event\block\PressurePlateUpdateEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\event\player\PlayerDropItemEvent;
@@ -111,5 +113,13 @@ class AstrealListener implements Listener
     {
         $player = $ev->getPlayer();
         $ev->setQuitMessage("§7[§c-§7]§6 " . $player->getName() . " §7left the server.");
+    }
+
+    public function onLaunch(PressurePlateUpdateEvent $ev): void
+    {
+        /** @var Player $entity */
+        foreach (array_filter($ev->getActivatingEntities(), fn(Entity $entity) => $entity instanceof Player) as $entity) {
+            $entity->knockBack($entity->getDirectionVector()->getX(), $entity->getDirectionVector()->getZ(), 3.0, 2);
+        }
     }
 }

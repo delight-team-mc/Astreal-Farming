@@ -33,7 +33,10 @@ class VanillaManager extends BaseManager
 	public function __construct()
 	{
 		parent::__construct('VanillaManager');
-		$this->experiments = new Experiments(["data_driven_items" => true], true);
+		$this->experiments = new Experiments([
+			"data_driven_items" => true,
+			"upcoming_creator_features" => true,
+		], true);
 		$this->registerEvent(DataPacketSendEvent::class, $this->onDataPacketSend(...));
 		$cachePath = $this->getLoader()->getDataFolder() . "idcache";
 		$this->getLoader()->getScheduler()->scheduleDelayedTask(new ClosureTask(static function () use ($cachePath): void {

@@ -3,3 +3,4 @@ name: Astreal
 version: 0.0.1
 main: astreal\Loader
 api: 5.25.2
+load: 'STARTUP'
