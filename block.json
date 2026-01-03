@@ -1,0 +1,169 @@
+TAG_Compound={
+  "blockTags" => TAG_List={
+    TAG_String="wood"
+    TAG_String="minecraft:is_axe_item_destructible"
+  }
+  "permutations" => TAG_List={
+    TAG_Compound={
+      "condition" => TAG_String="q.block_property('vanilla:rotation') == 2"
+      "components" => TAG_Compound={
+        "minecraft:transformation" => TAG_Compound={
+          "RX" => TAG_Int=0
+          "RY" => TAG_Int=0
+          "RZ" => TAG_Int=0
+          "SX" => TAG_Float=1
+          "SY" => TAG_Float=1
+          "SZ" => TAG_Float=1
+          "TX" => TAG_Float=0
+          "TY" => TAG_Float=0
+          "TZ" => TAG_Float=0
+        }
+      }
+    }
+    TAG_Compound={
+      "condition" => TAG_String="q.block_property('vanilla:rotation') == 3"
+      "components" => TAG_Compound={
+        "minecraft:transformation" => TAG_Compound={
+          "RX" => TAG_Int=0
+          "RY" => TAG_Int=2
+          "RZ" => TAG_Int=0
+          "SX" => TAG_Float=1
+          "SY" => TAG_Float=1
+          "SZ" => TAG_Float=1
+          "TX" => TAG_Float=0
+          "TY" => TAG_Float=0
+          "TZ" => TAG_Float=0
+        }
+      }
+    }
+    TAG_Compound={
+      "condition" => TAG_String="q.block_property('vanilla:rotation') == 4"
+      "components" => TAG_Compound={
+        "minecraft:transformation" => TAG_Compound={
+          "RX" => TAG_Int=0
+          "RY" => TAG_Int=1
+          "RZ" => TAG_Int=0
+          "SX" => TAG_Float=1
+          "SY" => TAG_Float=1
+          "SZ" => TAG_Float=1
+          "TX" => TAG_Float=0
+          "TY" => TAG_Float=0
+          "TZ" => TAG_Float=0
+        }
+      }
+    }
+    TAG_Compound={
+      "condition" => TAG_String="q.block_property('vanilla:rotation') == 5"
+      "components" => TAG_Compound={
+        "minecraft:transformation" => TAG_Compound={
+          "RX" => TAG_Int=0
+          "RY" => TAG_Int=3
+          "RZ" => TAG_Int=0
+          "SX" => TAG_Float=1
+          "SY" => TAG_Float=1
+          "SZ" => TAG_Float=1
+          "TX" => TAG_Float=0
+          "TY" => TAG_Float=0
+          "TZ" => TAG_Float=0
+        }
+      }
+    }
+  }
+  "properties" => TAG_List={
+    TAG_Compound={
+      "name" => TAG_String="vanilla:rotation"
+      "enum" => TAG_List={
+        TAG_Int=2
+        TAG_Int=3
+        TAG_Int=4
+        TAG_Int=5
+      }
+    }
+  }
+  "components" => TAG_Compound={
+    "minecraft:breathability" => TAG_Compound={
+      "value" => TAG_String="solid"
+    }
+    "minecraft:collision_box" => TAG_Compound={
+      "enabled" => TAG_Byte=1
+      "origin" => TAG_List={
+        TAG_Float=-8
+        TAG_Float=0
+        TAG_Float=-8
+      }
+      "size" => TAG_List={
+        TAG_Float=16
+        TAG_Float=16
+        TAG_Float=16
+      }
+    }
+    "minecraft:destructible_by_explosion" => TAG_Compound={
+      "value" => TAG_Float=0
+    }
+    "minecraft:destructible_by_mining" => TAG_Compound={
+      "value" => TAG_Float=4
+    }
+    "minecraft:liquid_detection" => TAG_Compound={
+      "detectionRules" => TAG_List={
+        TAG_Compound={
+          "canContainLiquid" => TAG_Byte=1
+          "liquidType" => TAG_String="water"
+          "onLiquidTouches" => TAG_String="no_reaction"
+          "stopsLiquidFromDirection" => TAG_Byte=0
+        }
+      }
+    }
+    "minecraft:display_name" => TAG_Compound={
+      "value" => TAG_String="Crate"
+    }
+    "minecraft:flammable" => TAG_Compound={
+      "catch_chance_modifier" => TAG_Int=5
+      "destroy_chance_modifier" => TAG_Int=20
+    }
+    "minecraft:friction" => TAG_Compound={
+      "value" => TAG_Float=0.4
+    }
+    "minecraft:geometry" => TAG_Compound={
+      "bone_visibility" => TAG_Compound={
+      }
+      "culling" => TAG_String=""
+      "identifier" => TAG_String="minecraft:geometry.full_block"
+    }
+    "minecraft:material_instances" => TAG_Compound={
+      "mappings" => TAG_Compound={
+      }
+      "materials" => TAG_Compound={
+        "*" => TAG_Compound={
+          "texture" => TAG_String="magenta_glazed_terracotta"
+          "render_method" => TAG_String="blend"
+          "face_dimming" => TAG_Byte=1
+          "ambient_occlusion" => TAG_Byte=1
+        }
+      }
+    }
+    "minecraft:selection_box" => TAG_Compound={
+      "enabled" => TAG_Byte=1
+      "origin" => TAG_List={
+        TAG_Float=-8
+        TAG_Float=0
+        TAG_Float=-8
+      }
+      "size" => TAG_List={
+        TAG_Float=16
+        TAG_Float=16
+        TAG_Float=16
+      }
+    }
+    "minecraft:on_player_placing" => TAG_Compound={
+    }
+    "minecraft:creative_category" => TAG_Compound={
+      "category" => TAG_String="all"
+      "group" => TAG_String="none"
+    }
+  }
+  "menu_category" => TAG_Compound={
+    "category" => TAG_String="all"
+    "group" => TAG_String="none"
+  }
+  "molangVersion" => TAG_Int=1
+}

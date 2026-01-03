@@ -1,0 +1,14 @@
+<?php
+
+namespace night\libraries\commands\args;
+
+use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
+
+class EquipmentSlotArg extends BaseArg
+{
+
+    public function getType(): int
+    {
+        return AvailableCommandsPacket::ARG_TYPE_EQUIPMENT_SLOT;
+    }
+}
